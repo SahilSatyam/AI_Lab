@@ -1,41 +1,60 @@
-from keras.models import Sequential
-from keras.layers import Embedding, LSTM, GRU
+# src/train.py
+import pandas as pd
+import torch
+from transformers import BertTokenizer, BertForSequenceClassification
+from torch.utils.data import DataLoader, TensorDataset
+import torch.optim as optim
+import torch.nn as nn
 
-# Create a Sequential model
-model = Sequential()
+# Load and preprocess data
+data = pd.read_excel('data/ticket_data.xlsx')
+# Data preprocessing steps go here, including text cleaning, tokenization, etc.
 
-# Add an Embedding layer (as discussed in the previous response)
-model.add(Embedding(input_dim=vocab_size, output_dim=embedding_dim, input_length=max_sequence_length))
+# Split data into train and test sets
+train_data, test_data = train_test_split(data, test_size=0.2, random_state=42)
 
-# Add LSTM layers
-model.add(LSTM(units=64, return_sequences=True))  # Return sequences if you have multiple LSTM layers stacked
-model.add(LSTM(units=64, return_sequences=True))  # Add more LSTM layers if needed
+# Tokenize input and output text
+tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
+train_input = tokenizer(train_data['problem_description'].tolist(), padding=True, truncation=True, return_tensors="pt", max_length=128)
+train_output = tokenizer(train_data['resolution_steps'].tolist(), padding=True, truncation=True, return_tensors="pt", max_length=128)
 
-# Add GRU layers
-model.add(GRU(units=32, return_sequences=True))    # Return sequences if you have multiple GRU layers stacked
-model.add(GRU(units=32, return_sequences=True))    # Add more GRU layers if needed
+# Create DataLoader for training
+train_dataset = TensorDataset(train_input['input_ids'], train_input['attention_mask'], train_output['input_ids'], train_output['attention_mask'])
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
-# You can also add Dense layers or other layers after LSTM/GRU layers for further processing
+# Define the model architecture
+model = BertForSequenceClassification.from_pretrained("bert-base-uncased")
+# Modify the model head for sequence-to-sequence tasks
+model.classifier = nn.Linear(model.config.hidden_size, tokenizer.vocab_size)
 
-# Compile the model and specify loss, optimizer, and metrics
-model.compile(loss='mean_squared_error', optimizer='adam', metrics=['accuracy'])
+# Define loss function and optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.AdamW(model.parameters(), lr=1e-5)
 
+# Training loop
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model.to(device)
+model.train()
 
-new 
-from keras.models import Sequential
-from keras.layers import Embedding, LSTM, Dense
+for epoch in range(epochs):
+    total_loss = 0
+    for batch in train_loader:
+        input_ids, attention_mask, output_ids, output_mask = batch
+        input_ids, attention_mask, output_ids, output_mask = input_ids.to(device), attention_mask.to(device), output_ids.to(device), output_mask.to(device)
+        
+        # Forward pass
+        outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=output_ids)
+        loss = outputs.loss
+        
+        # Backpropagation and optimization
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        
+        total_loss += loss.item()
 
-# Create a Sequential model
-model = Sequential()
+    # Print the average loss for this epoch
+    print(f"Epoch [{epoch + 1}/{epochs}] - Loss: {total_loss / len(train_loader)}")
 
-# Add an Embedding layer (as discussed earlier)
-model.add(Embedding(input_dim=vocab_size, output_dim=embedding_dim, input_length=max_sequence_length))
-
-# Add LSTM or GRU layers (choose one, you can also stack more if needed)
-model.add(LSTM(units=64, return_sequences=True))
-
-# Add a Dense layer for prediction with softmax activation
-model.add(Dense(units=vocab_size, activation='softmax'))
-
-# Compile the model and specify loss, optimizer, and metrics
-model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+# Save the trained model
+model.save_pretrained('models/')
