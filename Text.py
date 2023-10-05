@@ -246,3 +246,76 @@ if input_description in qa_model:
     print("Closing Steps:", answer)
 else:
     print("No matching description found in the model.")
+
+
+
+
+
+
+
+
+
+import spacy
+import random
+import json
+import re
+from spacy.training.example import Example
+
+# Load the spaCy model
+nlp = spacy.load("en_core_web_sm")
+
+# Sample data - replace this with your own dataset
+data = [
+    {"description": "How do I reset my password?", "closing_steps": "To reset your password, follow these steps..."},
+    {"description": "I can't access the application. What should I do?", "closing_steps": "To resolve access issues..."},
+    # Add more data here
+]
+
+# Prepare training data in spaCy format
+TRAIN_DATA = []
+for item in data:
+    description = item["description"]
+    closing_steps = item["closing_steps"]
+    doc = nlp(description)
+    start, end = 0, len(doc)
+    span = doc.char_span(start, end)
+    if span is None:
+        continue
+    example = (doc.text, {"entities": [(span.start_char, span.end_char, "CLOSING_STEPS")]})
+    TRAIN_DATA.append(example)
+
+# Initialize the model
+config = {
+    "nlp": {
+        "tokenizer": {"@tokenizers": "spacy.Tokenizer.v1"},
+        "ner": {"@ners": "ner", "move_names": "begin", "threshold": 0.5},
+    }
+}
+ner = nlp.add_pipe("ner", config=config)
+
+# Add the label
+ner.add_label("CLOSING_STEPS")
+
+# Train the model
+n_iter = 20
+optimizer = nlp.begin_training()
+for itn in range(n_iter):
+    random.shuffle(TRAIN_DATA)
+    losses = {}
+    for text, annotations in TRAIN_DATA:
+        example = Example.from_dict(nlp.make_doc(text), annotations)
+        nlp.update([example], drop=0.5, losses=losses)
+    print(losses)
+
+# Save the trained model to a file
+nlp.to_disk("qa_model")
+
+# Load the trained model
+trained_nlp = spacy.load("qa_model")
+
+# Test the model
+test_text = "How do I reset my password?"
+doc = trained_nlp(test_text)
+for ent in doc.ents:
+    if ent.label_ == "CLOSING_STEPS":
+        print(f"Closing Steps: {ent.text}")
