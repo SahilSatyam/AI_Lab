@@ -58,3 +58,74 @@ for epoch in range(epochs):
 
 # Save the trained model
 model.save_pretrained('models/')
+
+
+
+
+
+
+new
+
+
+
+
+import pandas as pd
+import numpy as np
+from keras.preprocessing.text import Tokenizer
+from keras.preprocessing.sequence import pad_sequences
+from keras.models import Sequential
+from keras.layers import Embedding, LSTM, Dense
+
+# Load your data from the Excel file
+data = pd.read_excel("your_data.xlsx")
+
+# Assuming your Excel file has columns "short problem description" and "resolution steps"
+problem_descriptions = data["short problem description"]
+resolution_steps = data["resolution steps"]
+
+# Tokenize the text data
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts(problem_descriptions)
+sequences = tokenizer.texts_to_sequences(problem_descriptions)
+
+# Padding/Truncating sequences
+max_sequence_length = 100  # Adjust this based on your data
+X = pad_sequences(sequences, maxlen=max_sequence_length, padding='post', truncating='post')
+
+# Tokenize the target (resolution steps)
+target_tokenizer = Tokenizer()
+target_tokenizer.fit_on_texts(resolution_steps)
+target_sequences = target_tokenizer.texts_to_sequences(resolution_steps)
+
+# Padding/Truncating target sequences
+Y = pad_sequences(target_sequences, maxlen=max_sequence_length, padding='post', truncating='post')
+
+# Define vocabulary sizes and embedding dimensions
+vocab_size_problem = len(tokenizer.word_index) + 1
+vocab_size_resolution = len(target_tokenizer.word_index) + 1
+embedding_dim = 100  # Adjust based on your data
+
+# Create a Sequential model
+model = Sequential()
+
+# Add an Embedding layer
+model.add(Embedding(input_dim=vocab_size_problem, output_dim=embedding_dim, input_length=max_sequence_length))
+
+# Add LSTM layers
+model.add(LSTM(units=64, return_sequences=True))
+
+# Add a Dense layer for prediction with softmax activation
+model.add(Dense(units=vocab_size_resolution, activation='softmax'))
+
+# Compile the model
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+# Train the model
+batch_size = 32  # Adjust batch size based on your data and resources
+num_epochs = 10  # Adjust the number of epochs based on your needs
+
+# Assuming you have prepared your input data and target data as numpy arrays
+# X is your input data (problem descriptions), and Y is your target data (resolution steps)
+# You may need to one-hot encode your target data or use appropriate loss functions depending on your specific problem
+
+model.fit(X, Y, batch_size=batch_size, epochs=num_epochs)
