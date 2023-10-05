@@ -190,3 +190,59 @@ for text, annotation in test_data:
 
 accuracy = correct / total
 print(f"Test Accuracy: {accuracy}")
+
+
+
+
+
+new
+
+
+
+
+import spacy
+
+# Load the English language model
+nlp = spacy.load("en_core_web_sm")
+
+# Sample data
+data = [
+    {
+        "description": "This is a sample incident description. Please help!",
+        "closing_steps": "Here are the closing steps for this incident.",
+    },
+    {
+        "description": "Another incident description. Need assistance!",
+        "closing_steps": "These are the closing steps for the second incident.",
+    },
+]
+
+# Train the question-answering model
+def train_qa_model(data):
+    qa_model = {}
+    for entry in data:
+        description = entry["description"]
+        closing_steps = entry["closing_steps"]
+        
+        # Process the text using spaCy
+        doc = nlp(description)
+        
+        # Extract relevant information from the text
+        # For simplicity, we'll just use the first sentence as the answer
+        answer = doc.sents[0].text
+        
+        # Store the answer for the description
+        qa_model[description] = closing_steps
+    
+    return qa_model
+
+# Train the model
+qa_model = train_qa_model(data)
+
+# Test the model
+input_description = "Another incident description. Need assistance!"
+if input_description in qa_model:
+    answer = qa_model[input_description]
+    print("Closing Steps:", answer)
+else:
+    print("No matching description found in the model.")
