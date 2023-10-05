@@ -129,3 +129,64 @@ num_epochs = 10  # Adjust the number of epochs based on your needs
 # You may need to one-hot encode your target data or use appropriate loss functions depending on your specific problem
 
 model.fit(X, Y, batch_size=batch_size, epochs=num_epochs)
+
+
+
+
+
+new
+
+
+
+
+import spacy
+import random
+import pandas as pd
+
+# Load spaCy model
+nlp = spacy.load("en_core_web_sm")
+
+# Load your Excel data into a DataFrame
+df = pd.read_excel("your_excel_file.xlsx")
+
+# Define training data in the format (description, closing steps)
+training_data = [(row["Description"], row["Closing steps"]) for index, row in df.iterrows()]
+
+# Shuffle the training data
+random.shuffle(training_data)
+
+# Split the data into training and testing sets (adjust the split ratio as needed)
+split_ratio = 0.8
+split_index = int(len(training_data) * split_ratio)
+train_data = training_data[:split_index]
+test_data = training_data[split_index:]
+
+# Initialize a text classification pipeline
+text_classifier = spacy.blank("en")
+text_cat = text_classifier.add_pipe("textcat")
+
+# Add labels (categories) to the text classification component
+text_cat.add_label("closing_steps")
+
+# Training the model
+nlp.begin_training()
+for epoch in range(10):  # You can adjust the number of epochs
+    random.shuffle(train_data)
+    losses = {}
+    for text, annotations in train_data:
+        nlp.update([text], [{"cats": {"closing_steps": 1 if annotations else 0}}], losses=losses)
+
+# Save the trained model
+text_classifier.to_disk("trained_text_classifier")
+
+# Test the model
+correct = 0
+total = len(test_data)
+for text, annotation in test_data:
+    doc = nlp(text)
+    predicted_closing_steps = doc.cats.get("closing_steps", 0)
+    if predicted_closing_steps == (1 if annotation else 0):
+        correct += 1
+
+accuracy = correct / total
+print(f"Test Accuracy: {accuracy}")
