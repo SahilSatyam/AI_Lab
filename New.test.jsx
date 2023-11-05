@@ -72,3 +72,164 @@ describe('DBLevelTrend Component', () => {
 
   // You can add more test cases for different parts of your component as needed.
 });
+
+
+
+
+
+
+
+
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event'; 
+import AppLevelTrend from './AppLevelTrend';
+
+describe('AppLevelTrend', () => {
+
+  it('renders page heading', () => {
+    render(<AppLevelTrend />);
+    expect(screen.getByTestId('page-heading')).toHaveTextContent('DB Growth Trend Report (Application Level)');
+  });
+
+  it('renders spinner on initial load', () => {
+    render(<AppLevelTrend />);
+    expect(screen.getByTestId('mds-progress-spinner')).toBeInTheDocument();
+  });
+
+  it('fetches and displays data on load', async () => {
+    render(<AppLevelTrend />);
+
+    await waitFor(() => expect(screen.queryByTestId('mds-progress-spinner')).not.toBeInTheDocument());
+    
+    expect(screen.getByTestId('mds-datatable')).toBeInTheDocument();
+    expect(screen.queryByText('No Data Found')).not.toBeInTheDocument();
+  });
+
+  it('filters data based on search queries', async () => {
+    // mock API response
+    const mockData = [{
+      APPL_SYS_ID: '123', 
+      APPL_SYS_NM: 'App 1'
+    }];
+    
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      json: jest.fn().mockResolvedValue({
+        rows: mockData,
+        columns: Object.keys(mockData[0])
+      })
+    });
+
+    render(<AppLevelTrend />);
+
+    await waitFor(() => expect(screen.queryByTestId('mds-progress-spinner')).not.toBeInTheDocument());
+
+    // type search queries
+    userEvent.type(screen.getByPlaceholderText('Search By Application ID'), '123');
+    userEvent.type(screen.getByPlaceholderText('Search By Application Name'), 'App 1');
+
+    // expect filtered row to show
+    expect(screen.getByText('123')).toBeInTheDocument();
+    expect(screen.getByText('App 1')).toBeInTheDocument();
+
+    // clear filters
+    userEvent.click(screen.getByText('X')); 
+    userEvent.click(screen.getAllByText('X')[1]);
+
+    // expect full data to show again
+    expect(screen.getByText('123')).toBeInTheDocument();
+    expect(screen.getByText('App 1')).toBeInTheDocument();
+  });
+
+  it('renders null state when no data matches filters', async () => {
+    // mock API response
+    const mockData = [{
+      APPL_SYS_ID: '123', 
+      APPL_SYS_NM: 'App 1'
+    }];
+    
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      json: jest.fn().mockResolvedValue({
+        rows: mockData,
+        columns: Object.keys(mockData[0])  
+      })
+    });
+
+    render(<AppLevelTrend />);
+
+    await waitFor(() => expect(screen.queryByTestId('mds-progress-spinner')).not.toBeInTheDocument());
+
+    // filter with non-matching search query
+    userEvent.type(screen.getByPlaceholderText('Search By Application ID'), '456');
+
+    expect(screen.queryByText('No Data Found')).toBeInTheDocument();
+  });
+
+  it('toggles legal hold filter', async () => {
+    // mock API response
+    const mockData = [{
+      APPL_SYS_ID: '123', 
+      APPL_SYS_NM: 'App 1',
+      LGL_HLD_STS: 'Yes'
+    }];
+    
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      json: jest.fn().mockResolvedValue({
+        rows: mockData,
+        columns: Object.keys(mockData[0])
+      })  
+    });
+
+    render(<AppLevelTrend />);
+
+    await waitFor(() => expect(screen.queryByTestId('mds-progress-spinner')).not.toBeInTheDocument());
+
+    // toggle legal hold filter on
+    userEvent.click(screen.getByTestId('mds-switch'));
+
+    // expect legal hold data to show
+    expect(screen.getByText('Yes')).toBeInTheDocument();
+
+    // toggle legal hold filter off
+    userEvent.click(screen.getByTestId('mds-switch'));
+
+    // expect full data to show again
+    expect(screen.getByText('Yes')).toBeInTheDocument();
+  });
+
+  it('navigates to DB level page on row click', async () => {
+    // mock API response
+    const mockData = [{
+      APPL_SYS_ID: '123',
+    }];
+
+    const mockDbData = [{
+      DB_NM: 'Db 1'  
+    }];
+    
+    jest.spyOn(global, 'fetch')
+      .mockResolvedValueOnce({
+        json: jest.fn().mockResolvedValue({
+          rows: mockData,
+          columns: Object.keys(mockData[0])
+        })
+      })
+      .mockResolvedValueOnce({
+        json: jest.fn().mockResolvedValue({
+          rows: mockDbData,  
+          columns: Object.keys(mockDbData[0])
+        })
+      });
+
+    const {history} = render(<AppLevelTrend />);
+
+    await waitFor(() => expect(screen.queryByTestId('mds-progress-spinner')).not.toBeInTheDocument());
+
+    // click row
+    userEvent.click(screen.getByText('123'));
+
+    // expect navigation to db page with data
+    expect(history.location.pathname).toBe('/db-level-trend-dashboard');
+    expect(history.location.state).toEqual(mockDbData);
+  });
+
+});
