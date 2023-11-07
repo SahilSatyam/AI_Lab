@@ -1,29 +1,50 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import YourComponent from './YourComponent'; // Replace with the actual import path
 
-test('should display data in DB Level Page', () => {
-  const mockData = {
-    // Your mock data here
-  };
+// Mock the fetch function and setSpinnerOn function
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    json: () => Promise.resolve({ rows: [], columns: [] }),
+  })
+);
+const setSpinnerOn = jest.fn();
 
-  // Render the AppLevelTrend within a MemoryRouter
-  render(
-    <MemoryRouter initialEntries={['/app-level-trend']}>
-      <Routes>
-        <Route path="/app-level-trend" element={<AppLevelTrend />} />
-        <Route path="/db-level-trend-dashboard" element={<DBLevelTrend />} />
-      </Routes>
-    </MemoryRouter>
-  );
+// Mock the navigate function (assuming you are using React Router)
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => mockNavigate,
+}));
 
-  // Simulate the navigation to DB Level Page (e.g., by clicking a button)
-  const moreDetailsButton = screen.getByText('DB Level Details');
-  userEvent.click(moreDetailsButton);
+describe('YourComponent', () => {
+  it('handles click event correctly', async () => {
+    render(<YourComponent />);
 
-  // Check if the data is displayed in the DBLevelTrend component
-  const dataElement = screen.getByText('Your Data Label'); // Replace with a label or content specific to your data
+    // Assuming you have a way to identify the table row, e.g., a test ID or specific content
+    const tableRow = screen.getByTestId('table-row'); // Replace with actual identifier
 
-  // Assert that the data is present in the DBLevelTrend component
-  expect(dataElement).toBeInTheDocument();
+    // Simulate a click event on the table row
+    fireEvent.click(tableRow);
+
+    // Ensure that the setSpinnerOn function was called with true
+    expect(setSpinnerOn).toHaveBeenCalledWith(true);
+
+    // Simulate the fetch response
+    await waitFor(() => {
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+    fetch.mockClear(); // Clear the fetch mock
+
+    // You may want to add more assertions for the fetch and navigate functionality
+    // For example, assert that fetch was called with the correct URL and mock the response.
+
+    // Assuming you navigate to a new route after fetching data
+    expect(mockNavigate).toHaveBeenCalledWith('/db-level-trend-dashboard', {
+      state: [], // Adjust this to match your actual data structure
+    });
+
+    // Ensure that the setSpinnerOn function was called with false after fetching and processing data
+    expect(setSpinnerOn).toHaveBeenCalledWith(false);
+  });
 });
