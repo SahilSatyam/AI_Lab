@@ -1,68 +1,44 @@
-# Step 1: Data Preparation
-
 import pandas as pd
+import pytest
+from your_module.report import post_generate_report  # Import your function from the module
 
-# Load your Excel data into a pandas DataFrame
-df = pd.read_excel("your_data.xlsx")
+# Sample data for testing
+latest_ingestion_data = [
+    # Your sample data here
+]
 
-# Preprocess the data (you may need to clean and preprocess text)
-# Split the data into a training set and a testing set
+class TestPostGenerateReport:
 
-# Step 2: Model Training
+    def test_post_generate_report(self):
+        # Create a mock database connection
+        class MockDbConnection:
+            def run_query(self, query, returns_value=True, fetch_one_flag=False):
+                # Return mock data for the query
+                mock_data = [
+                    # Your mock data here
+                ]
+                return mock_data
 
-from transformers import BertForQuestionAnswering, BertTokenizer, TrainingArguments, Trainer
-import torch
+        # Create an instance of the MockDbConnection
+        mock_db_conn = MockDbConnection()
 
-# Load BERT-Medium model and tokenizer
-model_name = "bert-medium-cased"
-tokenizer = BertTokenizer.from_pretrained(model_name)
-model = BertForQuestionAnswering.from_pretrained(model_name)
+        # Call the function with the mock data
+        result_df = post_generate_report(mock_db_conn, latest_ingestion_data)
 
-# Fine-tune the model on your data
-# You need to format your data into a format suitable for training with transformers
+        # Define your expected result
+        expected_columns = [
+            "APPL_SYS_ID", "APPL_SYS_NM", "APPL_SYS_STS_NM", "ACTL_OPER_DT", "PLN_RTR_DT", "ACTL_RTR_DT",
+            "PLN_DCMSN_DT", "ACTL_DCMSN_DT", "APPL_OWNR_NM", "INFO_OWNR_NM", "APPL_TECH_GP_OWNR_NM",
+            "LOB_FCTN_NM", "PROD_NM", "PROD_OWNR_NM", "LGL_HLD_STS", "DATA_RQR_DOC_STS_CD", "DB_SRVR_ID",
+            "DB_SRVR_NM", "RDBMS_VEND", "CRE_DT", "DB_MEM_SZ", "DB_MEM_USED", "DB_MEM_FREE", "RTRV_CRE_TS",
+            "LAST_UPDT_DT", "RPT_EXEC_ID", "CRE_TS", "DB_LVL_FALG", "APPL_LVL_FLAG"
+        ]
 
-# Define your training arguments (e.g., batch size, epochs, etc.)
-training_args = TrainingArguments(
-    output_dir="./qa_model",
-    per_device_train_batch_size=8,
-    num_train_epochs=3,
-    evaluation_strategy="epoch",
-    save_total_limit=2,
-    load_best_model_at_end=True,
-)
+        # Check if the result has the expected columns
+        assert result_df.columns.tolist() == expected_columns
 
-# Create a Trainer and fine-tune the model
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=train_dataset,
-    data_collator=data_collator,
-    eval_dataset=eval_dataset,
-    compute_metrics=compute_metrics,
-)
+        # You can add more assertions to check specific data in the result_df
 
-# Train the model
-trainer.train()
-
-# Save the trained model
-trainer.save_model()
-
-# Step 3: Question-Answering Interface
-
-# Load the fine-tuned model
-qa_model = BertForQuestionAnswering.from_pretrained("./qa_model")
-
-# Create a function to perform question-answering
-def ask_question(query, context):
-    inputs = tokenizer.encode_plus(query, context, add_special_tokens=True, return_tensors="pt")
-    start_positions, end_positions = qa_model(**inputs)
-    answer_start = torch.argmax(start_positions)
-    answer_end = torch.argmax(end_positions) + 1
-    answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(inputs["input_ids"][0][answer_start:answer_end]))
-    return answer
-
-# Example usage:
-query = "What should I do when I encounter this issue?"
-context = "Description of the issue goes here..."
-closing_steps = ask_question(query, context)
-print("Closing Steps:", closing_steps)
+# Run the tests using pytest
+if __name__ == "__main__":
+    pytest.main()
