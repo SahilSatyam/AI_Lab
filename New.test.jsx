@@ -1,195 +1,78 @@
-// Additional test cases
+// Test navigation when a DataTable row is clicked
+it("navigates to the DB level trend dashboard when a DataTable row is clicked", async () => {
+  const navigate = jest.fn();
+  jest.spyOn(require('react-router-dom'), 'useNavigate').mockImplementation(() => navigate);
 
-// Tile component
-test('renders tile with correct data', () => {
-  const tileData = {
-    title: 'Databases',
-    calculations: 10  
-  };
+  // Mock the fetch call to return some data
+  jest.spyOn(global, "fetch").mockResolvedValue({
+    json: () => Promise.resolve({
+      columns: ['APPL_SYS_ID', 'APPL_SYS_NM', 'LGL_HLD_STS'],
+      rows: [
+        ['123', 'Test Application', 'No'],
+      ],
+    }),
+  });
 
-  render(<DBLevelTrend mdsTileContent={[tileData]} />);
-  
-  const tile = screen.getByTestId('db-growth-calc-tiles');
-  expect(tile).toHaveTextContent(/Databases/i);
-  expect(tile).toHaveTextContent(/10/);
-});
-
-// Input components
-test('clears search input when clicking clear button', () => {
-  render(<DBLevelTrend />);
-
-  const input = screen.getByTestId('input-for-db-name');
-  fireEvent.change(input, { target: { value: 'test' } });
-  
-  const clearBtn = screen.getByRole('button', { name: /x/i });
-  fireEvent.click(clearBtn);
-  
-  expect(input.value).toBe('');
-});
-
-// Filter switch  
-test('updates alert filter state when toggling switch', () => {
-  render(<DBLevelTrend />);
-
-  const toggle = screen.getByTestId('mds-switch-for-alert');
-  
-  fireEvent.click(toggle);
-  expect(toggle).toBeChecked();
-
-  fireEvent.click(toggle);
-  expect(toggle).not.toBeChecked(); 
-});
-
-// Table component
-test('renders table with data', () => {
-  const rowData = [{ 
-    id: '1',
-    name: 'db1'
-  }];
-
-  render(<DBLevelTrend rowData={rowData} />);
-
-  const row = screen.getByText(/db1/i);
-  expect(row).toBeInTheDocument();
-});
-
-// handleDBLevelClick method
-test('calls API and updates data when row clicked', async () => {
-  const handleClick = jest.fn();
-  render(<DBLevelTrend onClick={handleClick} />);
-
-  fireEvent.click(screen.getByText(/View Chart/i));
-  
-  await waitFor(() => expect(handleClick).toHaveBeenCalledTimes(1));
-
-  // Check data updated  
-});
-
-// Line chart methods
-test('setLineChartData returns correct shape', () => {
-  const data = [{
-    timestamp: '2020-01-01',
-    freeSpace: 100,
-  }];
-
-  const result = setLineChartData(data);
-
-  expect(result).toEqual([
-    {
-      lineName: 'Free DB Space',
-      dataPoints: [
-        { x: expect.any(Number), y: 100 },  
-      ]
-    }
-  ]);
-});
-
-test('setLineChartXAxis returns min and max x values', () => {
-  const data = [
-    { timestamp: '2020-01-01' },
-    { timestamp: '2020-02-01' } 
-  ];
-  
-  const result = setLineChartXAxis(data);
-
-  expect(result).toEqual([
-    expect.any(Number), 
-    expect.any(Number)
-  ]);
-});
-
-//**************************************************//
-
-// Spinner component
-test('renders spinner during API call', async () => {
-  render(<DBLevelTrend />);
-
-  // Initiate API call
-  fireEvent.click(screen.getByText(/View Chart/i));
-
-  expect(screen.getByTestId('mds-progress-spinner')).toBeInTheDocument();
-
-  // Resolve API promise
-  await waitForElementToBeRemoved(() => 
-    screen.queryByTestId('mds-progress-spinner')
-  ); 
-});
-
-test('hides spinner after API call finishes', async () => {
-  render(<DBLevelTrend />);
-
-  // Initiate API call
-  fireEvent.click(screen.getByText(/View Chart/i));
-
-  await waitForElementToBeRemoved(() => 
-    screen.queryByTestId('mds-progress-spinner')
-  );
-  
-  expect(screen.queryByTestId('mds-progress-spinner')).not.toBeInTheDocument();
-});
-
-// Line chart component
-test('renders chart when data is available', async () => {
-  render(<DBLevelTrend chartData={true} />);
-
-  expect(screen.getByTestId('mds-line-chart')).toBeInTheDocument();
-});
-
-test('displays no data text when no data', () => {
-  render(<DBLevelTrend />);
-
-  expect(screen.getByText(/Please select row/i)).toBeInTheDocument();
-});
-
-// Trend table component 
-test('renders trend data table', () => {
-  const data = [{ id: '1' }];
-  render(<DBLevelTrend data={data} />);
-
-  expect(screen.getByTestId('mds-datatable-for-trend')).toBeInTheDocument();
-});
-
-// Misc helper functions
-test('filters data correctly', () => {
-  const data = [
-    { id: '1', name: 'db1' },
-    { id: '2', name: 'db2' }
-  ];
-
-  const filtered = filterData(data, '1');
-
-  expect(filtered).toEqual([{ id: '1', name: 'db1' }]); 
-});
-
-test('calculates database count', () => {
-  const data = [{ id: 1 }, { id: 2 }];
-
-  const count = getDatabaseCount(data);
-
-  expect(count).toBe(2);
-});
-
-// Test all other helper methods...
-
-// Simulate clicks and test handling
-test('sorts column when header clicked', () => {
-  // Render table
-  
-  fireEvent.click(screen.getByText(/Database Name/i));
-
-  // Expect sorted
-});
-
-test('shows error when API call fails', async () => {
-  server.use(
-    rest.get('/api', (req, res, ctx) => {
-      return res(ctx.status(500))
-    })
+  const { obj } = render(
+    <BrowserRouter>
+      <AppLevelTrend />
+    </BrowserRouter>
   );
 
-  render(<DBLevelTrend />);
+  // Wait for the data to be displayed
+  await waitFor(() => expect(screen.getByTestId("mds-datatable")).toBeInTheDocument());
 
-  fireEvent.click(screen.getByText(/View Chart/i));
+  // Simulate clicking on the first row of the DataTable
+  fireEvent.click(screen.getByText('Test Application'));
 
-  await waitFor(() => expect(screen.getByText(/Error/i)).toBeInTheDocument());
+  // Assert that navigation was called with the correct path
+  expect(navigate).toHaveBeenCalledWith("/db-level-trend-dashboard", expect.anything());
+
+  jest.restoreAllMocks();
+});
+
+// Test state changes for the search by application ID
+it("updates state on appID search", async () => {
+  const { obj } = render(
+    <BrowserRouter>
+      <AppLevelTrend />
+    </BrowserRouter>
+  );
+
+  const appIDQuery = screen.getByPlaceholderText("Search By Application ID");
+  fireEvent.change(appIDQuery, { target: { value: "12345" } });
+
+  // Assert that the appIDQuery state has been updated
+  expect(appIDQuery.value).toBe("12345");
+});
+
+// Test state changes for the search by application name
+it("updates state on appName search", async () => {
+  const { obj } = render(
+    <BrowserRouter>
+      <AppLevelTrend />
+    </BrowserRouter>
+  );
+
+  const appNameQuery = screen.getByPlaceholderText("Search By Application Name");
+  fireEvent.change(appNameQuery, { target: { value: "app_name" } });
+
+  // Assert that the appNameQuery state has been updated
+  expect(appNameQuery.value).toBe("app_name");
+});
+
+// Test state changes for the legal hold filter toggle
+it("toggles legal hold filter state", async () => {
+  const { obj } = render(
+    <BrowserRouter>
+      <AppLevelTrend />
+    </BrowserRouter>
+  );
+
+  const legalHoldFilterSwitch = screen.getByTestId("mds-switch");
+  fireEvent.click(legalHoldFilterSwitch);
+
+  // Assert that the legalHoldFilter state has been toggled
+  // Note: You will need to check how the state is updated in your component when the switch is toggled
+  // and assert the expected state change here.
 });
