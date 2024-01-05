@@ -1,98 +1,46 @@
-import pandas as pd
+Subject: Scheduling a Team Meeting to Showcase Recent Changes in {Project Name}
 
-def compare_db_mem_used(data1, data2):
-    # Define column names
-    columns = ["RPT_EXEC_ID", "APPL_SYS_ID", "DB_SRVR_ID", "DB_SRVR_NM", "DB_MEM_SZ", "DB_MEM_FREE", "DB_MEM_USED"]
+Hi [Team],
 
-    # Create dataframes
-    df1 = pd.DataFrame(data1, columns=columns)
-    df2 = pd.DataFrame(data2, columns=columns)
+I hope this email finds you well. I am excited to share the recent updates and enhancements we've made to {Project Name}. Your feedback is invaluable to us, and I believe a team meeting would be the ideal platform to showcase these changes and gather your thoughts.
 
-    # Merge the dataframes on common columns
-    merged_df = pd.concat([df1, df2], ignore_index=True)
+Proposed Meeting Details:
+Date: [Insert Date]
+Time: [Insert Time]
+Location/Link: [Insert Meeting Link]
 
-    # Group by APPL_SYS_ID and DB_SRVR_ID
-    grouped_df = merged_df.groupby(["APPL_SYS_ID", "DB_SRVR_ID"])
+Agenda:
+1. Overview of Recent Changes
+2. Demonstration of New Features
+3. Q&A and Discussion
 
-    # Function to compare DB_MEM_USED
-    def compare_memory(group):
-        # Find the row with the minimum RPT_EXEC_ID
-        earliest_row = group.loc[group['RPT_EXEC_ID'].idxmin()]
+Your insights are crucial in ensuring that the project aligns with our goals and expectations. Please confirm your availability, and if you have any specific topics you'd like us to cover during the meeting, feel free to share them beforehand.
 
-        # Get the earliest DB_MEM_USED value
-        earliest_db_mem_used = earliest_row['DB_MEM_USED']
+Looking forward to your participation and constructive input.
 
-        # Compare with every other DB_MEM_USED in the group
-        comparison_result = 'Yes' if any(group['DB_MEM_USED'] < earliest_db_mem_used) else 'No'
+Best regards,
+[Your Name]
+[Your Position]
+[Your Contact Information]
 
-        return pd.Series({'earliest_db_mem_used': earliest_db_mem_used, 'comparison_result': comparison_result})
+---
 
-    # Apply the comparison function to each group
-    result_df = grouped_df.apply(compare_memory).reset_index()
+Subject: Seeking Your Feedback on {Project Name} - User Experience and Functionality
 
-    return result_df
+Hello [Team],
 
-# Example usage
-data1 = [
-    # ... your data ...
-]
+I trust this email finds you in good spirits. As we continue to enhance {Project Name}, we highly value your input on the user experience and functionality aspects. Your feedback will play a pivotal role in shaping the future direction of the project.
 
-data2 = [
-    # ... your data ...
-]
+We would appreciate it if you could take some time to share your thoughts on the following:
 
-result_dataframe = compare_db_mem_used(data1, data2)
-print(result_dataframe)
+1. User Experience: Any suggestions or observations related to the overall user interface and interaction flow.
+2. Functionality: Thoughts on specific features, improvements, or areas that need attention.
 
+Feel free to respond directly to this email with your feedback, or if you prefer, we can schedule a brief meeting to discuss in more detail.
 
+Your insights are essential in our ongoing efforts to deliver a product that exceeds expectations. Thank you in advance for your time and collaboration.
 
-***************************************************************************************************************************************************************************
-
-import pandas as pd
-
-def compare_db_mem_used_with_flag(data1, data2):
-    # Define column names
-    columns = ["RPT_EXEC_ID", "APPL_SYS_ID", "DB_SRVR_ID", "DB_SRVR_NM", "DB_MEM_SZ", "DB_MEM_FREE", "DB_MEM_USED"]
-
-    # Create dataframes
-    df1 = pd.DataFrame(data1, columns=columns)
-    df2 = pd.DataFrame(data2, columns=columns)
-
-    # Merge the dataframes on common columns
-    merged_df = pd.concat([df1, df2], ignore_index=True)
-
-    # Group by APPL_SYS_ID and DB_SRVR_ID
-    grouped_df = merged_df.groupby(["APPL_SYS_ID", "DB_SRVR_ID"])
-
-    # Function to compare DB_MEM_USED and add a new column DB_LVL_FLAG
-    def compare_memory(group):
-        # Find the row with the minimum RPT_EXEC_ID
-        earliest_row = group.loc[group['RPT_EXEC_ID'].idxmin()]
-
-        # Get the earliest DB_MEM_USED value
-        earliest_db_mem_used = earliest_row['DB_MEM_USED']
-
-        # Compare with every other DB_MEM_USED in the group
-        group['DB_LVL_FLAG'] = 'Yes' if any(group['DB_MEM_USED'] < earliest_db_mem_used) else 'No'
-
-        return group
-
-    # Apply the comparison function to each group and reset the index
-    result_df = grouped_df.apply(compare_memory).reset_index(drop=True)
-
-    return result_df
-
-# Example usage
-data1 = [
-    # ... your data ...
-]
-
-data2 = [
-    # ... your data ...
-]
-
-result_dataframe = compare_db_mem_used_with_flag(data1, data2)
-print(result_dataframe)
-
-
-***********************************************************************************************************************************************************************************************************
+Best regards,
+[Your Name]
+[Your Position]
+[Your Contact Information]
