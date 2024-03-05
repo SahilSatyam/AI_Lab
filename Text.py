@@ -44,3 +44,54 @@ Best regards,
 [Your Name]
 [Your Position]
 [Your Contact Information]
+
+
+
+
+import json
+import requests
+
+# Replace these values with your own Jira credentials
+jira_url = 'https://your-jira-instance.atlassian.net'
+username = 'your-username'
+password = 'your-password'
+
+# Define the issue details
+issue_summary = 'My New Issue'
+issue_description = 'This is a test issue created with Python.'
+issue_project = 'Your Project Key'
+
+# Define the file attachment details
+file_name = 'your-file.txt'
+file_content = 'This is a test file created with Python.'
+
+# Create the Jira issue
+headers = {
+    'Content-Type': 'application/json',
+    'Authorization': f'Basic {requests.utils.quote(f"{username}:{password}")}'
+}
+
+data = {
+    'fields': {
+        'summary': issue_summary,
+        'description': issue_description,
+        'project': {
+            'key': issue_project
+        }
+    }
+}
+
+response = requests.post(f'{jira_url}/rest/api/2/issue', headers=headers, data=json.dumps(data))
+
+# Get the newly created issue ID
+issue_id = response.json()['id']
+
+# Attach the file to the issue
+file_data = {
+    'file': (file_name, file_content.encode(), 'text/plain')
+}
+
+response = requests.post(f'{jira_url}/rest/api/2/issue/{issue_id}/attachment', headers=headers, files=file_data)
+
+# Print the response
+print(response.text)
