@@ -48,50 +48,35 @@ Best regards,
 
 
 
-import json
-import requests
+from jira import JIRA
 
-# Replace these values with your own Jira credentials
-jira_url = 'https://your-jira-instance.atlassian.net'
-username = 'your-username'
-password = 'your-password'
+# Replace with your Jira server URL
+jira_server = "https://your_jira_server.com"
 
-# Define the issue details
-issue_summary = 'My New Issue'
-issue_description = 'This is a test issue created with Python.'
-issue_project = 'Your Project Key'
+# Replace with your Jira username and API token (not password)
+# You can generate an API token from your Atlassian account security settings
+jira_user = "your_jira_username"
+jira_api_token = "your_jira_api_token"
 
-# Define the file attachment details
-file_name = 'your-file.txt'
-file_content = 'This is a test file created with Python.'
+# Connect to Jira
+jira = JIRA(server=jira_server, basic_auth=(jira_user, jira_api_token))
 
-# Create the Jira issue
-headers = {
-    'Content-Type': 'application/json',
-    'Authorization': f'Basic {requests.utils.quote(f"{username}:{password}")}'
+# Define issue details
+project_key = "YOUR_PROJECT_KEY"  # Replace with your project key
+issue_type = "Story"  # You can find available issue types in your Jira project
+summary = "This is a story created from Python script"
+description = "This is a description of the story"
+
+# Create a dictionary with issue fields
+issue_fields = {
+    "project": {"key": project_key},
+    "issuetype": {"name": issue_type},
+    "summary": summary,
+    "description": description,
 }
 
-data = {
-    'fields': {
-        'summary': issue_summary,
-        'description': issue_description,
-        'project': {
-            'key': issue_project
-        }
-    }
-}
+# Create the issue
+new_issue = jira.create_issue(fields=issue_fields)
 
-response = requests.post(f'{jira_url}/rest/api/2/issue', headers=headers, data=json.dumps(data))
-
-# Get the newly created issue ID
-issue_id = response.json()['id']
-
-# Attach the file to the issue
-file_data = {
-    'file': (file_name, file_content.encode(), 'text/plain')
-}
-
-response = requests.post(f'{jira_url}/rest/api/2/issue/{issue_id}/attachment', headers=headers, files=file_data)
-
-# Print the response
-print(response.text)
+# Print the issue key
+print(f"New story created with key: {new_issue.key}")
