@@ -1,17 +1,35 @@
-curl \
-  -X POST \
-  -H "Authorization: Basic $(echo username:api_token | base64)" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "fields": {
-      "project": {
-        "key": "YOUR_PROJECT_KEY"
-      },
-      "issuetype": {
-        "name": "YOUR_ISSUE_TYPE"
-      },
-      "summary": "YOUR_SUMMARY",
-      "description": "YOUR_DESCRIPTION" (optional)
+import requests
+
+# Jira details
+jira_url = "https://your-jira-instance-url"
+project_key = "PROJECTKEY"
+api_token = "YOUR-JIRA-API-TOKEN"
+
+# Function to create a Jira issue
+def create_jira_issue(summary, description, issue_type="Story"):
+    endpoint = f"{jira_url}/rest/api/2/issue/"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Basic {api_token}",
     }
-  }' \
-  "https://your_jira_server/rest/api/2/issue"
+
+    data = {
+        "fields": {
+            "project": {"key": project_key},
+            "summary": summary,
+            "description": description,
+            "issuetype": {"name": issue_type},
+        }
+    }
+
+    response = requests.post(endpoint, json=data, headers=headers)
+
+    if response.status_code == 201:
+        print(f"Jira issue created successfully. Issue Key: {response.json()['key']}")
+    else:
+        print(f"Failed to create Jira issue. Status Code: {response.status_code}")
+        print(response.json())
+
+# Example usage
+if __name__ == "__main__":
+    create_jira_issue("Automated Story", "This story was created using a Python script.")
