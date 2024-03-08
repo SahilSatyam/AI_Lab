@@ -1,23 +1,13 @@
-from jira import JIRA
+def create_jira():
 
-# Connect to Jira
-jira = JIRA(basic_auth=("your_username", "your_api_token"), server="your_jira_server")
-
-# Get user groups
-user = jira.user.get_myself()
-user_groups = user.groups
-
-# Check project permissions for relevant groups
-project_key = "YOUR_PROJECT_KEY"
-project = jira.project(project_key)
-
-for group in user_groups:
-    # Iterate through project permissions for each group
-    permissions = project.permissions[group.name]
-    if "CREATE_ISSUE" in permissions:
-        print(f"Your group '{group.name}' has permission to create issues in project '{project_key}'.")
-        break  # Stop iterating if permission found
-
-# Handle no permission found scenario
-else:
-    print(f"Checked groups: {', '.join([g.name for g in user_groups])}. No 'CREATE_ISSUE' permission found.")
+    jira_url = "https://jiradc-ccb-cluster02.prod.aws.jpmchase.net"
+    try:
+        jira_api_token = 'UjczMjEzMjptby1hcGktblJuUFUzNTQ2U1I3OXdMR1FRUXJSaTBn'
+        logging.basicConfig(level=logging.DEBUG)
+        jira  = Jira(jira_url, token=f"Bearer {jira_api_token}")
+        print(jira.api_version)
+        return 'Jira connected successfully', 200
+    except Exception as e:
+        current_app.logger.error("Error while connecting to jira: {0}".format(str(e)))
+        traceback.print_exc()
+        return "Failed to connect to Jira", 400
