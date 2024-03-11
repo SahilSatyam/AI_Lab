@@ -1,0 +1,34 @@
+import requests
+
+# Jira Cloud API endpoint for creating issues
+api_url = "https://<your-company-name>.atlassian.net/rest/api/3/issue/"
+
+# Your Jira Cloud access token
+access_token = "<your-access-token>"
+
+# Issue data (replace with your own values)
+issue_data = {
+    "fields": {
+        "project": {"key": "<your-project-key>"},
+        "summary": "Issue Summary",
+        "description": "Issue Description",
+        "issuetype": {"name": "Task"}  # Change to the desired issue type
+    }
+}
+
+# Headers with authentication
+headers = {
+    "Authorization": f"Bearer {access_token}",
+    "Content-Type": "application/json"
+}
+
+# Send POST request to create the issue
+response = requests.post(api_url, json=issue_data, headers=headers)
+
+# Check the response
+if response.status_code == 201:
+    print("Issue created successfully!")
+    print("Issue Key:", response.json()["key"])
+else:
+    print("Failed to create issue. Status code:", response.status_code)
+    print("Error message:", response.text)
