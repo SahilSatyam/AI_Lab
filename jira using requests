@@ -1,34 +1,53 @@
+To send an email notification with all the necessary fields about a JIRA issue to someone using Python, you can utilize the JIRA REST API to fetch the issue details and then use a library like smtplib to send the email. Here's a general outline of how you can achieve this:
+
+Install Required Libraries:
+
+Make sure you have the requests library installed to interact with the JIRA REST API and the smtplib library to send emails. You can install them using pip:
+pip install requests
+Fetch JIRA Issue Details:
+
+Use the JIRA REST API to fetch the necessary fields of the JIRA issue. You will need to provide your JIRA server URL, issue key, and authentication credentials (username and API token) to authenticate and retrieve the issue details.
+Construct Email Content:
+
+Extract the required fields from the JIRA issue response and format them accordingly to include in the email content.
+Send Email:
+
+Use the smtplib library to send an email with the extracted JIRA issue details. You will need to provide the SMTP server details, sender email address, recipient email address, subject, and email content.
+Here's a basic example code snippet to get you started:
+
 import requests
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
-# Jira Cloud API endpoint for creating issues
-api_url = "https://<your-company-name>.atlassian.net/rest/api/3/issue/"
+# Fetch JIRA issue details
+issue_key = 'YOUR_ISSUE_KEY'
+jira_url = 'YOUR_JIRA_URL'
+auth = ('YOUR_USERNAME', 'YOUR_API_TOKEN')
+response = requests.get(f'{jira_url}/rest/api/2/issue/{issue_key}', auth=auth)
+issue_details = response.json()
 
-# Your Jira Cloud access token
-access_token = "<your-access-token>"
+# Construct email content
+email_content = f"""
+Issue Summary: {issue_details['fields']['summary']}
+Description: {issue_details['fields']['description']}
+Status: {issue_details['fields']['status']['name']}
+"""
 
-# Issue data (replace with your own values)
-issue_data = {
-    "fields": {
-        "project": {"key": "<your-project-key>"},
-        "summary": "Issue Summary",
-        "description": "Issue Description",
-        "issuetype": {"name": "Task"}  # Change to the desired issue type
-    }
-}
+# Send Email
+sender_email = 'YOUR_SENDER_EMAIL'
+receiver_email = 'RECIPIENT_EMAIL'
+smtp_server = 'SMTP_SERVER'
+smtp_port = 'SMTP_PORT'
 
-# Headers with authentication
-headers = {
-    "Authorization": f"Bearer {access_token}",
-    "Content-Type": "application/json"
-}
+msg = MIMEMultipart()
+msg['From'] = sender_email
+msg['To'] = receiver_email
+msg['Subject'] = 'JIRA Issue Notification'
+msg.attach(MIMEText(email_content, 'plain'))
 
-# Send POST request to create the issue
-response = requests.post(api_url, json=issue_data, headers=headers)
+with smtplib.SMTP(smtp_server, smtp_port) as server:
+    server.sendmail(sender_email, receiver_email, msg.as_string())
+Make sure to replace the placeholders (e.g., YOUR_ISSUE_KEY, YOUR_JIRA_URL, YOUR_USERNAME, YOUR_API_TOKEN, YOUR_SENDER_EMAIL, RECIPIENT_EMAIL, SMTP_SERVER, SMTP_PORT) with your actual JIRA and email server details.
 
-# Check the response
-if response.status_code == 201:
-    print("Issue created successfully!")
-    print("Issue Key:", response.json()["key"])
-else:
-    print("Failed to create issue. Status code:", response.status_code)
-    print("Error message:", response.text)
+This code snippet provides a basic framework for fetching JIRA issue details and sending an email notification. You can further enhance it by adding error handling, email attachments, or customizing the email content based on your requirements.
