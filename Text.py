@@ -80,3 +80,20 @@ new_issue = jira.create_issue(fields=issue_fields)
 
 # Print the issue key
 print(f"New story created with key: {new_issue.key}")
+
+
+
+
+const exportToExcel = (data, fileName, newColumnNames) => {
+    const worksheet = XLSX.utils.json_to_sheet(data);
+
+    // Rename columns using newColumnNames array
+    const desiredColNames = Object.keys(newColumnNames);
+    for (let i = 0; i < worksheet['!ref'].split(':')[1]; i++) {
+        XLSX.utils.rename_sheet_column(worksheet, i, desiredColNames[i]);
+    }
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, fileName);
+    // ... rest of the code remains the same
+};
